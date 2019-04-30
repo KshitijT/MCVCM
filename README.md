@@ -12,7 +12,7 @@ During the necessary modifications to facilitate this,
 I endeavoured to make this tool generalised and adaptable enough to be
 usable with any catalogue pairings. 
 
-Edits by sv26: I edited this code for cross-identifying the GLEAM 4-Jy Sample, and now am adpating it for cross-matching MIGHTEE data over the COSMOS field. My edits allow the software to run on pre-made cut-outs (rather than large mosaic .fits images), and it now displays the ID name in the interactive window.
+Edits by svw26: I edited this code for cross-identifying the GLEAM 4-Jy Sample, and now am adpating it for cross-matching MIGHTEE data over the COSMOS field. My edits allow the software to run on pre-made cut-outs (rather than large mosaic .fits images), and it now displays the ID name in the interactive window.
 
 
 ## Description
