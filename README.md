@@ -12,7 +12,7 @@ During the necessary modifications to facilitate this,
 I endeavoured to make this tool generalised and adaptable enough to be
 usable with any catalogue pairings. 
 
-Edits by svw26: I edited this code for cross-identifying the GLEAM 4-Jy Sample (https://github.com/svw26/G4Jy), and now am adpating it for cross-matching MIGHTEE data over the COSMOS field. My edits allow the software to: 
+Edits by svw26: I edited this code for cross-identifying the GLEAM 4-Jy Sample (https://github.com/svw26/G4Jy), and now am adapting it for cross-matching MIGHTEE data over the COSMOS field. My edits allow the software to: 
 * run on pre-made cut-outs (rather than large mosaic .fits images),
 * display the ID name in the interactive window,
 * calculate the rms of the radio data on-the-fly, using a method courtesy of Tom Mauch (SARAO).
