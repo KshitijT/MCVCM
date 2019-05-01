@@ -6,11 +6,11 @@
     "radio_catalog": "data/ELAIS/ATLASDR3_ELAIScmpcat_23July2015.dat",
     "infrared_catalog": "data/ELAIS/SWIRE_ELAISS1-FALL05.fits"
   },
-  "CDFS": {
-    "radio_continuum": "data/CDFS/CDFSmosaic_allch_8March2015.fits",
-    "radio_rms": "data/CDFS/CDFSmosaic_allch_noise_8March2015.fits",
-    "infrared_mosaic": "data/CDFS/cdfs_mosaic.fits",
-    "radio_catalog": "data/CDFS/ATLASDR3_CDFScmpcat_23July2015.dat",
-    "infrared_catalog": "data/CDFS/SWIRE-CDFS-FALL05.fits"
+  "COSMOS": {
+    "radio_continuum": "data/COSMOS/MIGHTEE/",
+    "radio_rms": "data/COSMOS/CDFSmosaic_allch_noise_8March2015.fits",
+    "infrared_mosaic": "data/COSMOS/KBAND/",
+    "radio_catalog": "data/COSMOS/COSMOSfield_test2_MIGHTEEcomps.txt",
+    "infrared_catalog": "data/COSMOS/Kband_LAIGLEMULTI.fits"
   }
 }

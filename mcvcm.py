@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python3    # svw26: Lots of 'f's before strings. ***Means Python 3.6 is needed***
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # mcvcm.py
@@ -24,6 +24,11 @@
 #	University of Tasmania
 #	Jul -- Aug 2016
 #
+#   mcvcm.py adapted for the GLEAM 4-Jy Sample, and now MIGHTEE-COSMOS:
+#   Sarah White
+#   ICRAR/Curtin University --> SARAO/Rhodes University
+#   Nov 2017 --> May 2019
+#
 # 25th Aug - Fixed crashing when end of catalogue reached
 # 27th Aug - Fixed poorly designed recursive function call, where start()
 #			 was called before previous start() call exited.
@@ -48,9 +53,14 @@
 #				- changed swire_catalogue format to .fits to save about 40 seconds on read-in at launch
 #				- forced window to top-left of screen when plotting
 # 27th Sep - Added a comment option: press 'c' at any time to open a dialogue box for saving a comment for current source
+#
+# Sarah's edits:
+# * Run over individual cutouts rather than a large mosaic images
+# * Display the ID name in the interactive window
+# * Specific to MIGHTEE-COSMOS -- Use and plot the MIGHTEE ID, [still to] collect together COSMOS components, and select the appropriate K-band host
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-from __future__ import print_function
+from __future__ import print_function   ### svw26: Isn't this enough to allow the f-string functionality? Stackoverflow says "no"
 
 import matplotlib
 
@@ -104,10 +114,10 @@ parser.add_argument('-x', help='if specified, processes only sources marked as \
 parser.add_argument('-d', help='if specified, does a dummy demo dose of \'dentification', action='store_true',
                     default=False)
 parser.add_argument('--savefigs', dest='figs', default=None, choices=['png', 'eps', 'pdf'],
-                    help='if file extenstion also provided saves final IDd\nfigures to that format (e.g. --savefigs '
+                    help='if file extension also provided saves final IDd\nfigures to that format (e.g. --savefigs '
                          'png)')
 
-parser.add_argument('field', choices=field_choices, help=f'specify the field we are working on from: {field_choices}')
+parser.add_argument('field', choices=field_choices, help=f'specify the field we are working on from: {field_choices}') 
 
 args = parser.parse_args()
 field = args.field
@@ -188,12 +198,12 @@ class Identity(object):
 
     def generate_tags(self):
         '''
-        we don't need a xid_tag fot the infrared cataloge
+        we don't need a xid_tag for the infrared cataloge
 
         we shouldn't get cases where there are components but no radio core
         as in this case, the closest component should be labeled as the core
-        dec 14: I've added a catch to take the first compoenet and make it the
-        radio core automagically if this situation arises
+        dec 14: I've added a catch to take the first component and make it the
+        radio core automagically if this situation arises 
         '''
         # clear xid_tags if this has already been called for some reason
         # otherwise it will append the same tags, no bid deal but unnecessary
@@ -209,13 +219,13 @@ class Identity(object):
         else:
             component_count = len(self.components)+1
 
-        core_ID = f'{self.rad_host[0]}*{self.inf_host[0]}*m{component_count}*C0'
+        core_ID = f'{self.rad_host[0]}*{self.inf_host[0]}*m{component_count}*C0'  
         self.xid_tags.append((core_ID,self.rad_host[1]))
         # core_ID is attached to radio catalogue 'core' named rad_host[0]
         # at row rad_host[1]
 
         for c,comp in enumerate(self.components):
-            comp_ID = f'{self.rad_host[0]}*{self.inf_host[0]}*m{component_count}*C{c+1}'
+            comp_ID = f'{self.rad_host[0]}*{self.inf_host[0]}*m{component_count}*C{c+1}'  
             self.xid_tags.append((comp_ID,comp[1]))
             # core_ID is attached to radio catalogue source named comp[0]
             # at row comp[1] - Since this is just the XID tag the combination
@@ -386,12 +396,12 @@ def on_key(event):
         save_fig(ID+'_manual', manual = True)
 
     if event.key == 'i':
-        ''' print lst 25 id'd sources (from table) '''
+        ''' print last 25 id'd sources (from table) '''
         print('Last 25 IDs')
         print(rTable[rTable['mcvcm_tag'] != tag_placeholder][-25:])
 
     if event.key == 'J':
-        ''' print lst 25 id'd sources (from table) '''
+        ''' print last 25 id'd sources (from table) '''
         print(ident.__dict__)
 
     if event.key == 'K':
@@ -477,11 +487,12 @@ def tricky_tag():
 
 # ------------------------------------------ #
 @verbwrap
-def next_phase():
+def next_phase( index ):
     '''
         removes scatter data,
         retains clicked point markers,
         plots new scatter data,
+        svw26: passing the index so that we can label the radio-core image with the radio ID
     '''
     global phase, sources, phase_title
 
@@ -490,7 +501,7 @@ def next_phase():
         sources.remove()
         sources, = ax.plot(rData[rRA_column], rData[rDEC_column], picker=6, transform=axtrans, linestyle='none',
                            **parameter_config['markers']['phase2'])
-        phase_title = 'Radio core ID'
+        phase_title = 'Radio core ID for: '+str(rTable[rID_col][index])  # svw26: Adding ID number from the 'radio table'
         ax.set_title(phase_title)
         fig.canvas.draw_idle()
     if phase == 2:
@@ -498,7 +509,7 @@ def next_phase():
         sources.remove()
         sources, = ax.plot(rData[rRA_column], rData[rDEC_column], picker=6, transform=axtrans, linestyle='none',
                            **parameter_config['markers']['phase3'])
-        phase_title = 'Radio component IDs'
+        phase_title = 'Radio components for: '+str(rTable[rID_col][index])  # svw26: Adding ID number from the 'radio table'
         ax.set_title(phase_title)
         fig.canvas.draw_idle()
     phase += 1
@@ -664,7 +675,7 @@ def start():
 
     ident = Identity()
     # Some default values
-    phase_title = 'Infrared host ID'  # plot titles
+    phase_title = 'Infrared host ID for: '+str(rTable[rID_col][target_index])  # svw26: Adding ID number from the 'radio table'  # plot titles
     phase = 1  # Identification phase
     certainty = 1  # Identification certainty default
 
@@ -680,14 +691,18 @@ def start():
         quitting = True
         return None
 
-    # Get coordinates of radio target
-    tRA, tDEC = rTable[rRA_column][target_index], rTable[rDEC_column][target_index]
+    # Get coordinates of radio target   # svw26: need the ID for loading the individual .fits files
+    tRA, tDEC, tID = rTable[rRA_column][target_index], rTable[rDEC_column][target_index], rTable[rID_col][target_index] 
     verboseprint('target RA,Dec = ', tRA, tDEC)
     target = SkyCoord(tRA, tDEC, frame='fk5', unit='deg')
 
-    # Grab figure, axis object, and axis transform from cutoutslink.py
-    fig, ax, axtrans, wcsmap = cutout.cutouts2(mosaic, radioSB, radioRMS, tRA, tDEC,
-                                               isize=ipix_current, rsize=rpix_current, verbose=verbose)
+    # svw26: Specify the exact images to use (as only the directory pathnames have been read in)
+    KBAND_image = mosaic + 'KBANDcutout' + str(tID) + '.fits'  # svw26: 'mosaic' is no longer a mosaic, see below
+    VLA_image = radioSB + 'Radiocutout' + str(tID) + '.fits'
+    
+    # Grab figure, axis object, and axis transform from cutoutslink.py      svw26: Have edited to pass the individual radio and infrared cut-outs
+    fig, ax, axtrans, wcsmap = cutout.cutouts2(KBAND_image, VLA_image, radioRMS, tRA, tDEC,
+                                               isize=ipix_current, rsize=rpix_current, verbose=verbose)   # svw26: Not actually using radioRMS map
     ax.set_title(phase_title)
     fig.canvas.draw_idle()
 
@@ -704,7 +719,7 @@ def start():
     clickID = fig.canvas.mpl_connect('pick_event', onpick)
 
     plt.subplots_adjust(left=0.05, right=0.9, top=0.9, bottom=0.1)
-    plt.get_current_fig_manager().window.wm_geometry(f"+{figure_pos_horizontal}+{figure_pos_vertical}")
+    plt.get_current_fig_manager().window.wm_geometry(f"+{figure_pos_horizontal}+{figure_pos_vertical}")  
     plt.show()
 
 
@@ -743,11 +758,11 @@ radioRMS = os.path.join(thisdir, path_config[field]["radio_rms"])
 mosaic = os.path.join(thisdir, path_config[field]["infrared_mosaic"])
 radio_catalogue = os.path.join(thisdir, path_config[field]["radio_catalog"])
 infrared_catalogue = os.path.join(thisdir, path_config[field]["infrared_catalog"])
-output_name = f'{field}_mcvcm_table.dat'
+output_name = f'{field}_mcvcm_table.dat'  
 
 # output path for saved files
 if doing_demo:
-    save_path = os.path.join(thisdir, table_path, f'demo-{output_name}')
+    save_path = os.path.join(thisdir, table_path, f'demo-{output_name}')   
 else:
     save_path = os.path.join(thisdir, table_path, output_name)
 
@@ -778,13 +793,13 @@ tag_placeholder = '-' * 53  # placeholder needs to be same length as MAX final ^
 comment_placeholder = '-' * 53
 skipped_placeholder = '---crossmatch_skipped-redo_by_running_with_-x_flag---'
 
-print(f'\nReading radio table: {radio_catalogue}')
+print(f'\nReading radio table: {radio_catalogue}')  
 rTable = ascii.read(radio_catalogue)
 rTable.add_column(Column([tag_placeholder, ] * len(rTable), name='mcvcm_tag'))
 rTable.add_column(Column([comment_placeholder, ] * len(rTable), name='mcvcm_comment'))
 rTable.add_column(Column([0, ] * len(rTable), name='mcvcm_flag'))
 
-print(f'\nReading infrared table: {infrared_catalogue}')
+print(f'\nReading infrared table: {infrared_catalogue}')    
 iTable = fits.open(infrared_catalogue)[1].data
 
 # ------------------------------------------ #

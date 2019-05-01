@@ -1,11 +1,11 @@
 {
   "column_names": {
-    "radio_ra": "RA_deg",
-    "radio_dec": "Dec_deg",
-    "radio_id": "ID",
-    "infrared_ra": "ra",
-    "infrared_dec": "dec",
-    "infrared_id": "object"
+    "radio_ra": "MIGHTEE_RA",
+    "radio_dec": "MIGHTEE_DEC",
+    "radio_id": "Gaus_id",
+    "infrared_ra": "ALPHA_J2000",
+    "infrared_dec": "DELTA_J2000",
+    "infrared_id": "INDEX"
   },
   "start_index": 0,
   "cutout_pixels": {

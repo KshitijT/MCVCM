@@ -14,10 +14,19 @@
 #   University of Tasmania
 #   Aug 2016
 #
+#   mcvcm.py adapted for the GLEAM 4-Jy Sample, and now MIGHTEE-COSMOS:
+#   Sarah White (svw26)
+#   ICRAR/Curtin University --> SARAO/Rhodes University
+#   Nov 2017 --> May 2019
+#
 # 19th Aug - Fixed crashing when optical mosaic slice wasn't square, or size 
 #            (0,0) due to being in a region where optical mosaic doesn't 
 #            cover. Optical array is now positionally inserted into an array 
-#            of zeros of the required shape. 
+#            of zeros of the required shape.
+#
+# Sarah's edits:
+# 15th Dec 2017 - Making use of Tom Mauch's method for calculating the local rms
+#                 of the radio image (rather than using a separate rms map).
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -30,6 +39,7 @@ import warnings
 
 import astropy.wcs as wcs
 import matplotlib.pyplot as plt
+import scipy.ndimage as ndimage   ### Added by svw26
 import numpy as np
 import reproject
 from astropy.io import fits
@@ -77,6 +87,34 @@ class Timer(object):
         self.end = time.clock()
         self.interval = self.end - self.start
 
+# ------------------------------------------ #
+# svw26: This function, for calculating the local rms, is courtesy of Tom Mauch
+def get_background_variance(data,sigma_clip=5.0,tolerance=0.01):
+    """Compute the variance by iteratively removing outliers greater than a given sigma
+    until the mean changes by no more than tolerance.
+
+    Inputs
+    ------
+    data - 1d numpy array of data to compute variance
+    sigma_clip - the amount of sigma to clip the data before the next iteration
+    tolerance - the fractional change in the mean to stop iterating
+
+    Outputs
+    -------
+    variance - the final background variance in the sigma clipped image
+    """
+    #Initialise diff and data_clip and mean and std
+    diff = 1
+    mean = np.nanmean(data)
+    data_clip = data
+    while diff > tolerance:
+        data_clip = data_clip[np.abs(data_clip)<mean+sigma_clip*np.nanstd(data_clip)]
+        newmean = np.nanmean(data_clip)
+        diff = np.abs(mean-newmean)/(mean+newmean)
+        mean = newmean
+    return np.nanvar(data_clip)
+# ------------------------------------------ #
+
 
 def rms(arr):
     '''
@@ -109,7 +147,7 @@ def arr_slice(arr, slicer, size):
 
 
 def cutouts2(infrared_mosaic, radio_image, radio_rms, targetRA, targetDEC, isize=200, rsize=180, vmax=1.5,
-             verbose=False):
+             verbose=False):   ### svw26: Note that vmax may need to be changed here, depending on the data
     """
 
     :param infrared_mosaic: asklujdhlkjhasdh
@@ -126,8 +164,8 @@ def cutouts2(infrared_mosaic, radio_image, radio_rms, targetRA, targetDEC, isize
     from matplotlib.colors import PowerNorm  # ,LogNorm, SymLogNorm,
     from astropy.nddata.utils import Cutout2D
 
-    if fits.getdata(radio_image)[0][0].shape != fits.getdata(radio_rms)[0][0].shape:
-        raise Exception('Check that the radio image and radio rms files match')
+    #if fits.getdata(radio_image)[0][0].shape != fits.getdata(radio_rms)[0][0].shape:   # svw26: Not actually using radioRMS maps
+    #    raise Exception('Check that the radio image and radio rms files match')
 
     target_radec = (targetRA, targetDEC)
 
@@ -155,12 +193,22 @@ def cutouts2(infrared_mosaic, radio_image, radio_rms, targetRA, targetDEC, isize
                     wcs=wcs.WCS(radio_image).celestial)
     rmap = rcut.wcs
 
-    # Contours are to be in steps of (2^n)*(2.5*median(local_rms))
-    contours = [2 ** x for x in range(17)]
-    rms_cut = Cutout2D(fits.getdata(radio_rms)[0][0], rpix, (rsize, rsize), mode='partial', fill_value=np.nan)
-    rmap = rcut.wcs
-    local_rms = 2.5 * np.nanmedian(rms_cut.data.flatten())
-    contours = [local_rms * x for x in contours]
+    # svw26: Contours previously in steps of (2^n)*(2.5*median(local_rms))
+    #contours = [2 ** x for x in range(17)]
+    #rms_cut = Cutout2D(fits.getdata(radio_rms)[0][0], rpix, (rsize, rsize), mode='partial', fill_value=np.nan)  # svw26: requires radioRMS maps
+    #rmap = rcut.wcs
+    #local_rms = 2.5 * np.nanmedian(rms_cut.data.flatten())
+    #contours = [local_rms * x for x in contours]
+
+    ### Added by svw26
+    data = pyfits.getdata(radio_image)
+    local_rms = np.sqrt(get_background_variance(data.flatten()))  # svw26: New method, using Tom Mauch's functions for calculating the local rms
+    print('local_rms = ',local_rms)  # svw26: for de-bugging, when no radio contours display...
+    print('radio_image = ',radio_image)  # svw26: for de-bugging, when no radio contours display...
+    highest_number_of_sigma = np.nanmax(data)/local_rms
+    use_this_highest_power = math.floor(math.log(highest_number_of_sigma,2))
+    contours = 3*local_rms*np.logspace(0,use_this_highest_power,num=use_this_highest_power+1,base=2.0)
+    print('contours = ',contours)  # svw26: for de-bugging, when no radio contours display...
 
     # project radio coordinates (rcut,rmap) onto optical projection omap
     # Fails unless you specifying the shape_out (to be the same as what you are projecting onto)
@@ -174,6 +222,9 @@ def cutouts2(infrared_mosaic, radio_image, radio_rms, targetRA, targetDEC, isize
 
     axtrans = axis.get_transform(
         'fk5')  # necessary for scattering data on later -- e.g ax.plot(data, transform=axtrans)
+
+    ### svw26: Seeing whether a Gaussian smoothing of the reprojected radio-data leads to better contours. Yep, it does.
+    #project_r = ndimage.gaussian_filter(project_r, sigma=(4.5, 4.5), order=0) 
 
     #### CHANGE VMAX HERE TO SUIT YOUR DATA - (I just experimented) #####
     # plotting
@@ -189,8 +240,10 @@ def cutouts2(infrared_mosaic, radio_image, radio_rms, targetRA, targetDEC, isize
 
     return figure, axis, axtrans, imap
 
+
+### svw26: What is different between cutouts(), below, and cutouts2(), above?
 def cutouts(infrared_mosaic, radio_image, radio_rms, targetRA, targetDEC, isize=200, rsize=180, vmax=1.5,
-            verbose=False):
+            verbose=False):   ### svw26: Note that vmax may need to be changed here, depending on the data
     """
 
     :param infrared_mosaic: asklujdhlkjhasdh

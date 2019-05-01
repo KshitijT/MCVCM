@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python3    # svw26: Lots of 'f' before strings. ***Means Python 3.6 is needed***
 
 
 
@@ -55,10 +55,10 @@ def version_control(filename):
     bkp_int = 1
     bkp_path = '{}-bkp-{:02d}'.format(path, bkp_int)
 
-    print(f'Found a preexisting file: {filename}')
+    print('Found a preexisting file: {filename}')         
 
-    while file_accessible(f'{bkp_path}{exten}'):
-        print(f'also found {bkp_path}{exten}')
+    while file_accessible(f'{bkp_path}{exten}'):         
+        print(f'also found {bkp_path}{exten}')            
         bkp_int += 1
         bkp_path = '{}-bkp-{:02d}'.format(path, bkp_int)
 
