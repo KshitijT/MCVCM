@@ -17,7 +17,7 @@ Edits by svw26: I edited this code for cross-identifying the GLEAM 4-Jy Sample (
 * display the ID name in the interactive window,
 * calculate the rms of the radio data on-the-fly, using a method courtesy of Tom Mauch (SARAO).
 
-Unfortunately, can't test that it works yet, as it requires Python 3.6...
+Unfortunately, can't test that it works yet, as Jesse's updates require Python 3.6...
 
 
 ## Description
